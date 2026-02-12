@@ -73,11 +73,17 @@
             position: relative; z-index: 10;
         }
 
-        .music-control {
+        /* Dual Music Controls */
+        .music-control-container {
             position: fixed; top: 20px; right: 20px;
-            background: var(--light); padding: 12px;
+            display: flex; gap: 10px; z-index: 100;
+        }
+
+        .music-btn {
+            background: var(--light); width: 50px; height: 50px;
             border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            cursor: pointer; z-index: 100; font-size: 1.5rem;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 1.2rem;
         }
 
         header {
@@ -90,7 +96,7 @@
             color: var(--primary); text-shadow: 2px 2px 0px white;
         }
 
-        /* Photo Gallery Styling */
+        /* Gallery */
         .gallery {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -112,7 +118,7 @@
             display: block; border: 1px solid #f0f0f0;
         }
 
-        /* Message Section */
+        /* Message */
         .message-section {
             background: var(--glass); backdrop-filter: blur(10px);
             padding: 35px; border-radius: 25px;
@@ -190,15 +196,20 @@
         </div>
     </div>
 
-    <audio id="bg-music" loop>
-        <source src="music.mp3" type="audio/mpeg">
+    <audio id="bg-music">
+        <source id="music-source" src="music1.mp3" type="audio/mpeg">
     </audio>
 
     <canvas id="confetti-canvas"></canvas>
 
     <div id="main-content">
-        <div class="music-control" onclick="toggleMusic()">
-            <span id="music-icon">⏸</span>
+        <div class="music-control-container">
+            <div class="music-btn" onclick="toggleMusic()">
+                <span id="music-icon">⏸</span>
+            </div>
+            <div class="music-btn" onclick="nextSong()">
+                <span>⏭️</span>
+            </div>
         </div>
 
         <header>
@@ -241,7 +252,9 @@
 
     <script>
         let isMusicPlaying = false;
+        let currentSong = 1;
         const music = document.getElementById('bg-music');
+        const source = document.getElementById('music-source');
         const musicIcon = document.getElementById('music-icon');
         const canvas = document.getElementById('confetti-canvas');
         const ctx = canvas.getContext('2d');
@@ -252,7 +265,7 @@
         function startSurprise() {
             document.getElementById('landing-screen').style.opacity = '0';
             music.volume = 0.5;
-            music.play().then(() => { isMusicPlaying = true; }).catch(e => console.log("Music play blocked"));
+            music.play().then(() => { isMusicPlaying = true; }).catch(e => console.log("Play blocked"));
 
             setTimeout(() => {
                 document.getElementById('landing-screen').style.display = 'none';
@@ -262,38 +275,45 @@
         }
 
         function toggleMusic() {
-            if (isMusicPlaying) {
-                music.pause();
-                musicIcon.innerText = '▶';
-            } else {
+            if (music.paused) {
                 music.play();
                 musicIcon.innerText = '⏸';
+            } else {
+                music.pause();
+                musicIcon.innerText = '▶';
             }
-            isMusicPlaying = !isMusicPlaying;
         }
+
+        function nextSong() {
+            currentSong = currentSong === 1 ? 2 : 1;
+            source.src = `music${currentSong}.mp3`;
+            music.load();
+            music.play();
+            musicIcon.innerText = '⏸';
+        }
+
+        music.onended = function() {
+            nextSong();
+        };
 
         function openGift() {
             document.querySelector('.gift-box-container').classList.add('open');
             fireConfetti();
         }
 
+        // Confetti Logic
         let particles = [];
         const colors = ['#ff6b6b', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'];
-
         function fireConfetti() {
             for (let i = 0; i < 150; i++) {
                 particles.push({
-                    x: window.innerWidth / 2,
-                    y: window.innerHeight / 2,
-                    r: Math.random() * 5 + 2,
-                    dx: (Math.random() - 0.5) * 15,
+                    x: window.innerWidth / 2, y: window.innerHeight / 2,
+                    r: Math.random() * 5 + 2, dx: (Math.random() - 0.5) * 15,
                     dy: (Math.random() - 0.5) * 15,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    life: 120
+                    color: colors[Math.floor(Math.random() * colors.length)], life: 120
                 });
             }
         }
-
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             particles.forEach((p, i) => {
@@ -306,11 +326,6 @@
             requestAnimationFrame(draw);
         }
         draw();
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
     </script>
 </body>
 </html>
